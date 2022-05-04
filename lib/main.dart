@@ -8,7 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:potophe/admingame.dart';
 import 'package:potophe/briceclass.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -41,7 +42,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  //
+
+  Uri urload = Uri.parse("https://www.paulbrode.com/polo.html");
   DateTime currentDate = DateTime.now();
   var finalDate = "2021-6-6"; // Va me servir pour les  controles d'acces
   TextEditingController legendeController = TextEditingController();
@@ -78,7 +80,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String labelTitre = "";
   String labelLegende = "";
-
   final ButtonStyle flatButtonStyle = TextButton.styleFrom(
     primary: Colors.black87,
     minimumSize: Size(50, 50),
@@ -119,8 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             listLogovofo[counterCaption].votepoints = _laNote;
                             thisCaptionNote = _laNote.toString();
                           } else {
-                            print(
-                                " Should never Happen listLogovofo[counterCaption]");
+                            print(" Should never Happen N°6 "+listLogovofo[counterCaption].potoname+ " User actuel "+ potoName);
                           }
                         });
                       },
@@ -164,6 +164,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     height: thisheight,
                   ),
                 ),
+
+                
                 //  getListViewReduce(),
               ],
             ),
@@ -244,9 +246,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       // Mode Votage
                       setState(() {
                         _isVoteOn = true;
-                        print ("counterCaption" +counterCaption.toString() +
-                            "listLegendesFoto.length " +listLegendesFoto.length.toString()+
-                        counterFotos.toString());
+                        print("counterCaption" +
+                            counterCaption.toString() +
+                            "listLegendesFoto.length " +
+                            listLegendesFoto.length.toString() +
+                            counterFotos.toString());
                         counterCaption++;
 
                         if (counterCaption >= listLegendesFoto.length) {
@@ -342,6 +346,21 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         );
                       })),
+              IconButton(
+                  icon: const Icon(Icons.upload_file),
+                  iconSize: 25,
+                  color: Colors.red,
+                  tooltip: 'sms',
+
+                    onPressed: () async {
+                      const url = "https://www.paulbrode.com/polo.html";
+                      if(await canLaunchUrlString(url)){
+                        await launchUrlString(url);
+                      }else {
+                        throw 'Could not launch $url';
+                      }
+
+                  }),
             ]),
       ),
       // This trailing comma makes auto-formatting nicer for build methods.
@@ -356,9 +375,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return (res);
   }
 
-
-
-Future createLegende() async {
+  Future createLegende() async {
     Uri url =
         Uri.parse("https://www.paulbrode.com/php/createUpdateLEGENDE.php");
     int laclef = buildClePML(listLegendes.length, NBMAXPOTOS, potoId);
@@ -380,22 +397,20 @@ Future createLegende() async {
     // Il Faut relire
     // Creation  des Votes Vierges
     for (Potos _thisPoto in listPotos) {
-      if (_thisPoto.potoname != potoName)  {
-        createVote(laclef, _thisPoto.potoname, 0, ipv4name,potoName
-            ); //
+      if (_thisPoto.potoname != potoName) {
+        createVote(laclef, _thisPoto.potoname, 0, ipv4name, potoName); //
       }
     }
 
-
     getDataLegendes();
-    updatePotos(); // toujours là
+    updatePotos(); //
     setState(() {
       _isSavingCaption = false;
     });
   }
 
-Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
-      String _potoname) async {
+  Future createVote(int _legendeid, String _potovotant, int _points,
+      String _ipv4, String _potoname) async {
     Uri url = Uri.parse("https://www.paulbrode.com/php/createVOTE.php");
     var data = {
       "LEGENDEID": _legendeid.toString(),
@@ -495,13 +510,11 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
     getVotes();
     getIP();
     counterFotos = 1;
-    // majFotoActive();
   }
 
   void majFotoActive() {
     // Initialise mafoto
-    // Passage obligatoire  ; A surveiller
-    // On change
+
     if (!_isGamerOk) {
       mafoto = "assets/marin.jpeg";
       return;
@@ -522,7 +535,6 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
     mafoto = 'upload/'; //<PML TODO>
     mafoto = mafoto + filouname + '.' + filoutype.trim();
     selectLegendesFoto(); // Listing des  Caption par Foto Active
-
     // Regarder Si il y a commentaire pour lutilisateur actif
     labelLegende = "";
     for (Legendes _thisObjet in listLegendes) {
@@ -540,10 +552,9 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
     // Une relecture
     getVotes();
     // <PML> Pas sur
-
     for (Logovofo _thisLogovofo in listLogovofo) {
       int _thisIndex = _thisLogovofo.legendeid;
-          updateVote(_thisLogovofo.legendeid, _thisLogovofo.potovotant,
+      updateVote(_thisLogovofo.legendeid, _thisLogovofo.potovotant,
           _thisLogovofo.votepoints);
     }
     _isSavingVotes = false;
@@ -564,33 +575,9 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
         listLegendesFoto.add(_thisObjet);
       }
     }
-
-
-    //*********
-
-    bool _reload=false;
+    bool _reload = false;
     listLogovofo.clear();
-    for (Legendes _thisLegende in listLegendesFoto) {
-      int thisindex = _thisLegende.legendeid;
-      _found = false;
-      for (Votes _thisVote in listVotes) {
-        _found = false;
-        if ((_thisVote.legendeid == thisindex) &&
-            (_thisVote.potovotant == potoName)) {
-                    _found = true;
-        } else {}
-      }
-      if (!_found) {
-        if (potoName != _thisLegende.potoname) {
-          print  ("  SHould Never Happen  Creation  "+ thisindex.toString() );
-       /*
-          createVote(thisindex, potoName, 0, ipv4name,
-              _thisLegende.potoname); // votant
-          _reload =true;
-*/
-        }
-      }
-    }
+
 
     //*************
     //  Maintenant  verifieons si il existe des  votes du poto actif
@@ -599,6 +586,7 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
     for (Legendes _thisLegende in listLegendesFoto) {
       int thisindex = _thisLegende.legendeid;
       _found = false;
+      int nbret=0;
       for (Votes _thisVote in listVotes) {
         _found = false;
         if ((_thisVote.legendeid == thisindex) &&
@@ -614,31 +602,23 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
               potovotant: potoName,
               votepoints: _thisVote.votepoints);
           listLogovofo.add(_logofo);
+          print  (" ??" + _thisLegende.potoname + "   "+ potoName);
+          print(" SNH  N°5  "+ nbret.toString() +"  "+ thisindex.toString());
+
           _found = true;
+          nbret++;
         } else {}
       }
-      if (!_found) {
 
-     print  (" Should Never  Happen  N°5  "+ thisindex.toString() );
-      //on a a pas trouve le record On va le cxréer
-        /*  createVote(thisindex, potoName, 0, ipv4name,
-              _thisLegende.potoname); // votant
-          _reload =true;*/
-
-        }
-      }
     }
-
-
+  }
 
   void selectUnSet() {
     //listUpload contient tout
     // On prend une partie mais laqueelle ? A définir
     listPhotoUpload.clear();
-    int dd = listUpload.length;
-
     //  Attention à la clé si on ne genere qu'une partie
-    // Donc si Novele Partie  Suppression imperatives des  Legende et Votes
+    // Donc si Novelle Partie  Suppression imperatives des  Legende et Votes
 
     for (Photoupload _thisObjet in listUpload) {
       if (_thisObjet.fotoproprio == "INCONNU") {
@@ -672,8 +652,11 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
       "VOTEPOINTS": _points.toString(),
     };
     var res = await http.post(url, body: data);
-    // getDataLegendes();
   }
+
+
+
+    
 
   void _decrementCounter() {
     setState(() {
@@ -683,6 +666,13 @@ Future createVote(int _legendeid, String _potovotant, int _points, String _ipv4,
       majFotoActive();
     });
   }
+  void _launchUrl() async {
+    if (!await launchUrl(urload)) {
+      throw 'Could not launch ';
+    }
+
+  }
+
 
   void _incrementCounter() {
     _isVoteOn = false;
